@@ -11,6 +11,7 @@ class Listing:
     self.loc = self.parse_loc(text)
     self.owner = self.parse_owner(text)
     self.price = self.parse_price(text)
+    self.url = self.parse_url(text)
 
   def __str__(self):
     output = "" + self.loc + "--" + self.price + "--"
@@ -18,9 +19,6 @@ class Listing:
       output += "owner"
     else:
       output += "agent"
-
-    #output += "\n" + self.text.renderContents()
-
     return output
 
   def parse_loc(self, text):
@@ -40,7 +38,25 @@ class Listing:
     price = listing_desc[1:5]
     return price
 
+  def parse_url(self, text):
+    """parse out CL page url from link"""
+    anchor = text.find('a')
+    if anchor:
+      return anchor['href']
+    else:
+      return ""
 
+  def print_link(self):
+    """print html formatted link to Listing page"""
+    link = ""
+    link += "<a href=\"" + self.url + "\">" + str(self) + "</a>"
+    if self.owner:
+      link = "<b>" + link + "</b>"
+
+    return link
+
+
+#Utilities for groups of Listings
 def sift_by_location(listings, terms):
   """Pare list of items by match locations with terms"""
   results = []
@@ -67,6 +83,22 @@ def parse_page(page, today):
 
   return (items, False)
 
+def dedupe(listings):
+  """remove listings with identical titles"""
+  results = [] 
+  for idx, val in enumerate(listings):
+    original = True
+    for comp in listings[idx+1:]:
+      if (comp.text.find('a').renderContents() == 
+          val.text.find('a').renderContents() or
+         comp.url == val.url):
+        original = False
+        break
+    if original:
+      results += [val]
+
+  return results
+
 def compile_listings(url, **params):
   """Create list of listing items from search terms"""
   listings = []
@@ -81,6 +113,7 @@ def compile_listings(url, **params):
     if params['s'] >= 1000:
       finished = True
 
+  listings = dedupe(listings)
   return listings
 
 def open_page(url, search_params):
@@ -88,8 +121,3 @@ def open_page(url, search_params):
   url_params = urllib.urlencode(search_params)
   login_fobj = urllib2.urlopen(url + "?" + url_params) 
   return BeautifulSoup(login_fobj.read()) 
-
-#listings = compile_listings("http://boston.craigslist.org/search/aap", bedrooms
-#    = '5', query = 'somerville|davis|ball|porter|tufts')
-#for i in listings:
-#  print i
