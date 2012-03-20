@@ -121,3 +121,16 @@ def open_page(url, search_params):
     url_params = urllib.urlencode(search_params)
     login_fobj = urllib2.urlopen(url + "?" + url_params) 
     return BeautifulSoup(login_fobj.read()) 
+
+if __name__ == '__main__':    
+    listings = compile_listings("http://boston.craigslist.org/search/aap", 
+                            bedrooms = '5', 
+                            query = 'somerville|davis|porter|ball|tufts')
+
+    listings.sort(key=lambda listing: listing.price)
+    listings = sift_by_location(listings, ["somerville", "porter", "davis", 
+                                              "ball", "tufts", "cambridge"])
+
+    for l in listings:
+        print str(l)
+        
