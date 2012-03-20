@@ -1,0 +1,12 @@
+#python stuff
+*.pyc
+
+#ignore automail
+automail/*
+
+#eclipse stuff
+.project
+.pydevproject
+
+#temp files
+*.*~
