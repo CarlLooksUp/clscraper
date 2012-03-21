@@ -12,6 +12,7 @@ class Listing:
         self.owner = self.parse_owner(text)
         self.price = self.parse_price(text)
         self.url = self.parse_url(text)
+        self.googleMapLink = self.parse_google_map_url(text)
 
     def __str__(self):
         output = "" + self.loc + "--" + self.price + "--"
@@ -45,11 +46,31 @@ class Listing:
             return anchor['href']
         else:
             return ""
-        
+    
+    def parse_google_map_url(self, text):
+        """go to the url for the listing, and get a google maps link to it's location, if one exists"""
+        listing_url = self.url if self.url else self.parse_url(text)
+        listing_page = BeautifulSoup(urllib2.urlopen(listing_url).read())
+        #first, try to find a google maps link already formed
+        linksToGoogleMaps = listing_page.findAll('a', href=re.compile('maps.google.com'))
+        for tag in linksToGoogleMaps:
+            if tag.find(text=re.compile("google map")):
+                return tag['href']
+        #if this didn't work, try to find a location
+        #then construct a google maps link from it
+        geoAreaCLTAG =  listing_page.find(text=re.compile("CLTAG GeographicArea"))
+        if geoAreaCLTAG is None:
+            return ''
+        location = geoAreaCLTAG[geoAreaCLTAG.index('=')+1:].strip()\
+        #need to have '+' instead of spaces
+        locationWithPluses = '+'.join(location.split())
+        googleMapsLink = 'https://maps.google.com/?q=loc%3A+' + locationWithPluses
+        return googleMapsLink
+                                    
     def print_link(self):
         """print html formatted link to Listing page"""
         link = ""
-        link += "<a href=\"" + self.url + "\">" + str(self) + "</a>"
+        link += '<a href="' + self.url + '">' + str(self) + "</a>" + '\t<a href="' + self.googleMapLink + '"> google map</a>'
         if self.owner:
             link = "<b>" + link + "</b>"
         
@@ -132,5 +153,5 @@ if __name__ == '__main__':
                                               "ball", "tufts", "cambridge"])
 
     for l in listings:
-        print str(l)
+        print l.print_link()
         
