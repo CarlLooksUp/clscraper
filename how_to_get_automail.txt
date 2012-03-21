@@ -1,0 +1,24 @@
+To get the automail submodule, execute the following commands from the clscraper directory.
+
+git submodule init
+git submodule update
+
+See http://help.github.com/submodules/ for more details on how submodules work both in general and in github.
+
+Important notes:
+
+Always publish the submodule change before publishing the change to the superproject that references it. If you forget to publish the submodule change, others won't be able to clone the repository.
+
+For example, if you made a change to automail, do the following:
+
+cd clscraper/automail
+git commit -a -m "Made a change to automail"
+git push
+cd ..
+git add automail
+git commit -m "Updated autmail"
+git push
+
+Also, note that there is no trailing slash in the "git add automail" line - if a trailing slash is included, it will cease to be a submodule and become a regular folder checked into the repository.
+
+See http://book.git-scm.com/5_submodules.html for more information about submodules, and their pitfalls.

@@ -1,0 +1,3 @@
+[submodule "automail"]
+	path = automail
+	url = git://github.com/rationalcarl/automail.git
