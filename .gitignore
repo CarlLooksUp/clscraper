@@ -2,7 +2,7 @@
 *.pyc
 
 #ignore automail
-automail/*
+#automail/*
 
 #eclipse stuff
 .project

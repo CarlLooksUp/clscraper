@@ -1,4 +1,4 @@
 syntax: glob
 *.txt
-automail/*
+#automail/*
 *.pyc
