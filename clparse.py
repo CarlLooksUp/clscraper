@@ -12,7 +12,7 @@ class Listing:
         self.owner = self.parse_owner(text)
         self.price = self.parse_price(text)
         self.url = self.parse_url(text)
-        self.googleMapLink = self.parse_google_map_url(text)
+        self.parse_listing_page()
 
     def __str__(self):
         output = "" + self.loc + "--" + self.price + "--"
@@ -47,18 +47,17 @@ class Listing:
         else:
             return ""
     
-    def parse_google_map_url(self, text):
-        """go to the url for the listing, and get a google maps link to it's location, if one exists"""
-        listing_url = self.url if self.url else self.parse_url(text)
-        listing_page = BeautifulSoup(urllib2.urlopen(listing_url).read())
+    def parse_google_map_url(self, page):
+        """find google maps link from listing body if it exists"""
         #first, try to find a google maps link already formed
-        linksToGoogleMaps = listing_page.findAll('a', href=re.compile('maps.google.com'))
+        linksToGoogleMaps = page.findAll('a', 
+                                         href=re.compile('maps.google.com'))
         for tag in linksToGoogleMaps:
             if tag.find(text=re.compile("google map")):
                 return tag['href']
         #if this didn't work, try to find a location
         #then construct a google maps link from it
-        geoAreaCLTAG =  listing_page.find(text=re.compile("CLTAG GeographicArea"))
+        geoAreaCLTAG = page.find(text=re.compile("CLTAG GeographicArea"))
         if geoAreaCLTAG is None:
             return ''
         location = geoAreaCLTAG[geoAreaCLTAG.index('=')+1:].strip()\
@@ -66,10 +65,32 @@ class Listing:
         locationWithPluses = '+'.join(location.split())
         googleMapsLink = 'https://maps.google.com/?q=loc%3A+' + locationWithPluses
         return googleMapsLink
-                                    
+    
+    def parse_start_date(self, title, page):
+        """Find start date within page text or title"""
+
+        title_text = title.find('a').string
+        start_date = re.search('(\d+\/\d+)(\/\d+)?', title_text)
+
+        if(not start_date):
+            page_text = ''.join(page.find(id="userbody").findAll(text=True))
+            start_date = re.search('(\d+\/\d+)(\/\d+)?', page_text)
+
+        if(start_date): 
+            start_date = start_date.group(0)
+        else:
+            start_date = "Unknown"
+        return start_date
+
+    def parse_listing_page(self):
+        listing_url = self.url if self.url else self.parse_url(self.text)
+        listing_page = BeautifulSoup(urllib2.urlopen(listing_url).read())
+        self.googleMapLink = self.parse_google_map_url(listing_page)
+        self.start_date = self.parse_start_date(self.text, listing_page)
+
     def print_link(self):
         """print html formatted link to Listing page"""
-        link = ""
+        link = "" + self.start_date + " -- "
         link += '<a href="' + self.url + '">' + str(self) + "</a>" + '\t<a href="' + self.googleMapLink + '"> google map</a>'
         if self.owner:
             link = "<b>" + link + "</b>"
@@ -92,7 +113,7 @@ def sift_by_location(listings, terms):
 def parse_page(page, today):
     """Create list of listing items from CL page
     
-         return list of items and boolean representing whether to continue search"""
+       return list of items and boolean representing whether to continue search"""
     print page.title
     lines = page.findAll('p')
     items = []
