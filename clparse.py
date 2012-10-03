@@ -164,6 +164,7 @@ def open_page(url, search_params):
     login_fobj = urllib2.urlopen(url + "?" + url_params) 
     return BeautifulSoup(login_fobj.read()) 
 
+#  Run from command line
 if __name__ == '__main__':    
     listings = compile_listings("http://boston.craigslist.org/search/aap", 
                             bedrooms = '5', 
